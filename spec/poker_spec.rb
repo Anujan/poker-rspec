@@ -76,16 +76,15 @@ describe "Poker" do
     end
   end
 
-  subject(:hand) { Hand.new(
-    deck, Card.new(:D, :jack), Card.new(:D, :ten), Card.new(:D, :nine),
-    Card.new(:D, :eight), Card.new(:D, :seven)
-    )
-  }
-
   describe Hand do
     let(:deck) { Deck.new([Card.new(:S, :four),
       Card.new(:H, :three), Card.new(:H, :eight)]) }
 
+    let(:hand) { Hand.new(
+        deck, Card.new(:D, :jack), Card.new(:D, :ten), Card.new(:D, :nine),
+        Card.new(:D, :eight), Card.new(:D, :seven)
+        )
+      }
     let(:draw_hand) { Hand.new(deck,
       Card.new(:C, :jack), Card.new(:C, :ten), Card.new(:C, :nine),
       Card.new(:C, :eight), Card.new(:C, :seven)
@@ -126,7 +125,9 @@ describe "Poker" do
 
     describe "#replace" do
       describe "valid moves" do
-        before { hand.replace(1, 3) }
+        before do
+          hand.replace(3, 5)
+        end
 
         it "should not change the number of cards in the hand" do
           hand.cards.count.should eq(5)
@@ -138,9 +139,8 @@ describe "Poker" do
         end
 
         it "should add the top cards from the deck" do
-          [Card.new(:S, :four), Card.new(:H, :three)].all? do |card|
-            hand.cards.include?(card)
-          end.should be_true
+            hand.cards.include?(Card.new(:S, :four)).should be_true
+            hand.cards.include?(Card.new(:H, :three)).should be_true
         end
       end
 
@@ -156,10 +156,15 @@ describe "Poker" do
   end
 
   describe Player do
+    let(:hand) { Hand.new(
+      Deck.new, Card.new(:D, :jack), Card.new(:D, :ten), Card.new(:D, :nine),
+      Card.new(:D, :eight), Card.new(:D, :seven)
+      )
+    }
     subject(:player) { Player.new("Joe", 20000, hand) }
     its(:name) { should == "Joe" }
     its(:bankroll) { should == 20000 }
-    its(:hand) { should == Hand.new(deck, Card.new(:D, :jack),
+    its(:hand) { should == Hand.new(Deck.new, Card.new(:D, :jack),
       Card.new(:D, :ten), Card.new(:D, :nine),Card.new(:D, :eight), Card.new(:D, :seven)) }
 
     describe "#place_bet" do
@@ -197,7 +202,8 @@ describe "Poker" do
   end
 
   describe Game do
-    subject(:game) { Game.new }
+    subject(:game) { Game.new(Player.new("Joe", 20000),
+      Player.new("Hoe", 1000)) }
     its(:pot) { should == 0 }
     its("deck.count") { should == 52 }
     its(:turn) { should == game.players[0]}

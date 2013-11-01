@@ -46,6 +46,14 @@ class Card
   def <=>(other)
     self.rank <=> other.rank
   end
+
+  def ==(other)
+    other.value == self.value && other.suit == self.suit
+  end
+
+  def to_s
+    "#{value} of #{suit}"
+  end
 end
 
 class Deck
@@ -112,7 +120,7 @@ class Hand
   end
 
   def cards
-    @cards.sort
+    @cards.sort!
   end
 
   def straight?
@@ -161,15 +169,11 @@ class Hand
 
   def beats(other_hand)
     beat = HANDS.index(self.value.first) <=> HANDS.index(other_hand.value.first)
-    puts "HANDS: #{HANDS.index(self.value.first)}, HAND2: #{HANDS.index(other_hand.value.first)}"
-    puts "HAND: #{other_hand.cards}"
-    puts "beat: #{beat}"
     case beat
     when -1
       :win
     when 0
       high_card = Card.values.index(self.value.last) <=> Card.values.index(other_hand.value.last)
-      puts "high_card: #{high_card}"
       case high_card
       when -1
         :lose
@@ -190,21 +194,58 @@ class Hand
     args.map! { |el| el - 1 }
     deleted = []
     args.each do |c|
-      raise "invalid index" unless (0...cards.count).include?(c)
-      deleted << self.cards.delete_at(c)
+      raise "invalid index" unless (0...self.cards.count).include?(c)
+      deleted << self.cards[c]
+      self.cards[c] = deck.take(1)[0]
     end
     deck.return(deleted)
-    self.cards << self.deck.take(args.count)
+  end
+
+  def ==(other)
+    self.cards.all? do |c|
+      other.cards.include?(c)
+    end
   end
 end
 
 class Player
-  def initialize(name, bankroll)
+  attr_accessor :bankroll, :hand, :in_play
+  attr_reader :name
+
+  def initialize(name, bankroll, hand = [])
+    @name = name
+    @bankroll = bankroll
+    @hand = hand
+    @in_play = true
+  end
+
+  def place_bet(amt)
+    raise "insufficient bankroll" if amt > bankroll
+    raise "get a job" if amt < 0
+    self.bankroll -= amt
+  end
+
+  def add_pot(amt)
+    self.bankroll += amt
+  end
+
+  def fold
+    self.in_play = false
+  end
+
+  def in_play?
+    @in_play
   end
 end
 
 class Game
-  def initialize
+  attr_accessor :pot, :deck, :turn
+  attr_reader :players
+  def initialize(*players)
+    @pot = 0
+    @deck = Deck.new.shuffle
+    @players = players
+    @turn = @players[0]
   end
 end
 
